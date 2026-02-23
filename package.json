@@ -1,0 +1,25 @@
+{
+  "name": "gh-prx",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub CLI extension for agentic PR and CI workflows",
+  "type": "module",
+  "scripts": {
+    "build": "bunx tsgo -p tsconfig.json",
+    "typecheck": "bunx tsgo --noEmit -p tsconfig.json",
+    "lint": "bunx oxlint .",
+    "format": "bunx oxfmt .",
+    "test": "bun test",
+    "e2e:live": "bash scripts/e2e-live.sh"
+  },
+  "dependencies": {
+    "goke": "latest",
+    "picocolors": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@typescript/native-preview": "latest",
+    "oxfmt": "latest",
+    "oxlint": "latest"
+  }
+}
