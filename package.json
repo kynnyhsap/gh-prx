@@ -1,9 +1,37 @@
 {
   "name": "gh-prx",
   "version": "0.1.0",
-  "private": true,
   "description": "GitHub CLI extension for agentic PR and CI workflows",
+  "keywords": [
+    "agent",
+    "ci",
+    "cli",
+    "gh",
+    "github",
+    "pr"
+  ],
+  "homepage": "https://github.com/kynnyhsap/gh-prx#readme",
+  "bugs": {
+    "url": "https://github.com/kynnyhsap/gh-prx/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kynnyhsap/gh-prx.git"
+  },
+  "bin": {
+    "gh-prx": "./gh-prx"
+  },
+  "files": [
+    "gh-prx",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "bunx tsgo -p tsconfig.json",
     "typecheck": "bunx tsgo --noEmit -p tsconfig.json",
@@ -21,5 +49,8 @@
     "@typescript/native-preview": "latest",
     "oxfmt": "latest",
     "oxlint": "latest"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

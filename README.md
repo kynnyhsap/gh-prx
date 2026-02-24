@@ -53,6 +53,13 @@ gh extension install .
 gh extension install kynnyhsap/gh-prx
 ```
 
+### Install with npm (optional)
+
+```bash
+npm install -g gh-prx
+gh prx --help
+```
+
 ### Verify
 
 ```bash
