@@ -3,10 +3,11 @@ set -euo pipefail
 
 echo "Running live readonly e2e checks..."
 
-if [[ -z "${GH_PRX_E2E_REPO:-}" || -z "${GH_PRX_E2E_CWD:-}" ]]; then
-  echo "Set GH_PRX_E2E_REPO and GH_PRX_E2E_CWD to run against a real repository."
-  echo "Example: GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=~/src/cli"
-fi
+export GH_PRX_E2E_REPO="${GH_PRX_E2E_REPO:-oven-sh/bun}"
+export GH_PRX_E2E_CWD="${GH_PRX_E2E_CWD:-$(pwd)}"
+
+echo "Target repo: $GH_PRX_E2E_REPO"
+echo "Working dir: $GH_PRX_E2E_CWD"
 
 gh auth status >/dev/null
 

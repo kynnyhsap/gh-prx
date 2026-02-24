@@ -219,7 +219,13 @@ Readonly live suite:
 bun run e2e:live
 ```
 
-Set `GH_PRX_E2E_REPO` and `GH_PRX_E2E_CWD` to point at any readonly target repository.
+Default readonly target is `oven-sh/bun`.
+
+Override target if needed:
+
+```bash
+GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=$(pwd) bun run e2e:live
+```
 
 ## Related docs
 

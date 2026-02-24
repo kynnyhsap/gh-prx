@@ -38,13 +38,15 @@ No lint/format config files are required; defaults are used.
 bun run e2e:live
 ```
 
-To run against a real repository, set:
+Default target is `oven-sh/bun`.
+
+Override target repository by setting:
 
 - `GH_PRX_E2E_REPO` (for example `cli/cli`)
-- `GH_PRX_E2E_CWD` (path to local checkout of that repo)
+- `GH_PRX_E2E_CWD` (optional working directory; defaults to current directory)
 
 Example:
 
 ```bash
-GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=~/src/cli bun run e2e:live
+GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=$(pwd) bun run e2e:live
 ```
