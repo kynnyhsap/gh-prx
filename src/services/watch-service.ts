@@ -1,6 +1,10 @@
 import type { OutputFormat, RepoRef, RunSummary } from "../domain/types";
 import { getRunSummary, resolveRunId } from "./ci-service";
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 interface WatchOptions {
   target?: string;
   intervalSec: number;
@@ -85,6 +89,6 @@ export async function watchCi(repo: RepoRef, options: WatchOptions): Promise<num
       return 1;
     }
 
-    await Bun.sleep(options.intervalSec * 1000);
+    await sleep(options.intervalSec * 1000);
   }
 }

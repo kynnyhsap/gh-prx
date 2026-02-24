@@ -4,7 +4,7 @@
 
 - `gh` CLI installed
 - `gh auth login` completed
-- Bun installed
+- Bun installed (preferred) or Node.js 22+
 
 ## Local setup
 
@@ -38,7 +38,13 @@ No lint/format config files are required; defaults are used.
 bun run e2e:live
 ```
 
-Optional env vars:
+To run against a real repository, set:
 
-- `GH_AGENT_TEST_PR`
-- `GH_AGENT_TEST_RUN`
+- `GH_PRX_E2E_REPO` (for example `cli/cli`)
+- `GH_PRX_E2E_CWD` (path to local checkout of that repo)
+
+Example:
+
+```bash
+GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=~/src/cli bun run e2e:live
+```

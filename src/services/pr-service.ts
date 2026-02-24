@@ -1,6 +1,7 @@
 import type { CheckSummary, PrRef, RepoRef } from "../domain/types";
 import { CliError } from "../util/errors";
 import { ghJson } from "../util/gh";
+import { spawnSync } from "node:child_process";
 
 interface GhPr {
   number: number;
@@ -68,12 +69,11 @@ export function resolvePr(target: string | undefined, repo: RepoRef): PrRef {
 }
 
 function currentBranch(): string | null {
-  const proc = Bun.spawnSync(["git", "branch", "--show-current"], {
-    stdout: "pipe",
-    stderr: "pipe",
+  const proc = spawnSync("git", ["branch", "--show-current"], {
+    encoding: "utf8",
   });
-  if (proc.exitCode !== 0) return null;
-  const branch = Buffer.from(proc.stdout).toString("utf8").trim();
+  if (proc.status !== 0) return null;
+  const branch = (proc.stdout || "").trim();
   return branch || null;
 }
 

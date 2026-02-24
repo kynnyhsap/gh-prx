@@ -1,23 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Running live e2e checks..."
+echo "Running live readonly e2e checks..."
+
+if [[ -z "${GH_PRX_E2E_REPO:-}" || -z "${GH_PRX_E2E_CWD:-}" ]]; then
+  echo "Set GH_PRX_E2E_REPO and GH_PRX_E2E_CWD to run against a real repository."
+  echo "Example: GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=~/src/cli"
+fi
 
 gh auth status >/dev/null
 
-if [[ -n "${GH_AGENT_TEST_PR:-}" ]]; then
-  gh prx context "$GH_AGENT_TEST_PR" --format json >/dev/null
-  gh prx threads list "$GH_AGENT_TEST_PR" --unresolved --format json >/dev/null
-  gh prx ci status "$GH_AGENT_TEST_PR" --format json >/dev/null
-else
-  gh prx context --format json >/dev/null
-  gh prx threads list --unresolved --format json >/dev/null
-  gh prx ci status --format json >/dev/null
-fi
+bun test test/e2e/live-smoke.test.ts
 
-if [[ -n "${GH_AGENT_TEST_RUN:-}" ]]; then
-  gh prx ci annotations "$GH_AGENT_TEST_RUN" --format json >/dev/null || true
-  gh prx ci logs "$GH_AGENT_TEST_RUN" --failed --tail 50 --format text >/dev/null || true
-fi
-
-echo "Live e2e checks passed."
+echo "Live readonly e2e checks passed."

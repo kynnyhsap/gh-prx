@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import goke from "goke";
 import type { OutputFormat } from "../domain/types";
@@ -84,7 +84,7 @@ addCommonOptions(
     .command("context [target]", "Unified PR + CI snapshot")
     .example("gh prx context")
     .example("gh prx context 123")
-    .example("gh prx context docs/my-branch --repo membranehq/core")
+    .example("gh prx context docs/my-branch --repo cli/cli")
     .action(
       withErrorHandling((target: string | undefined, options: CommonOptions) => {
         applyColorOption(options);

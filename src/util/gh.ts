@@ -1,4 +1,5 @@
 import { CliError } from "./errors";
+import { spawnSync } from "node:child_process";
 
 interface GhExecOptions {
   repo?: string;
@@ -17,16 +18,15 @@ export function ghExec(args: string[], options: GhExecOptions = {}): string {
     fullArgs.push("-R", options.repo);
   }
 
-  const proc = Bun.spawnSync(["gh", ...fullArgs], {
-    stdout: "pipe",
-    stderr: "pipe",
+  const proc = spawnSync("gh", fullArgs, {
+    encoding: "utf8",
   });
 
-  const stdout = Buffer.from(proc.stdout).toString("utf8").trim();
-  const stderr = Buffer.from(proc.stderr).toString("utf8").trim();
+  const stdout = (proc.stdout || "").trim();
+  const stderr = (proc.stderr || "").trim();
 
-  if (proc.exitCode !== 0 && !options.allowFailure) {
-    throw new CliError(stderr || `gh ${fullArgs.join(" ")} failed`, proc.exitCode || 1);
+  if (proc.status !== 0 && !options.allowFailure) {
+    throw new CliError(stderr || `gh ${fullArgs.join(" ")} failed`, proc.status || 1);
   }
 
   return stdout;
