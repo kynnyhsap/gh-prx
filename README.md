@@ -43,16 +43,6 @@ gh extension install kynnyhsap/gh-prx
 - `gh` CLI authenticated (`gh auth status`)
 - Bun (preferred) or Node.js 20+
 
-### Global install (secondary)
-
-```bash
-npm install -g gh-prx
-# or
-bun add -g gh-prx
-
-gh prx --help
-```
-
 ### Manual install from source (secondary)
 
 ```bash
