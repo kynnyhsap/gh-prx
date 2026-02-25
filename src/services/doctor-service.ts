@@ -13,7 +13,7 @@ export function runDoctor(
       severity: "error",
       code: "REQUIRED_CHECK_FAILED",
       message: "One or more CI checks failed.",
-      nextAction: "Run `gh agent ci logs --failed` and fix the first failing job.",
+      nextAction: "Run `gh prx ci logs --failed` and fix the first failing job.",
     });
   }
 
@@ -22,7 +22,7 @@ export function runDoctor(
       severity: "error",
       code: "UNRESOLVED_THREADS",
       message: `${context.unresolvedThreads.length} unresolved review thread(s).`,
-      nextAction: "Run `gh agent threads list --unresolved` and address each thread.",
+      nextAction: "Run `gh prx threads list --unresolved` and address each thread.",
     });
   }
 
