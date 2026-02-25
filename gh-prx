@@ -3,9 +3,10 @@
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
-const entryFile = resolve(rootDir, "src/cli/index.ts");
+const entryFile = resolve(rootDir, "dist/index.js");
 const argv = process.argv.slice(2);
 
 const nodeMajor = Number((process.versions.node || "0").split(".")[0]);
@@ -14,11 +15,14 @@ if (nodeMajor < 20) {
   process.exit(1);
 }
 
+if (!existsSync(entryFile)) {
+  process.stderr.write("error: build output is missing. Run `bun run build` first.\n");
+  process.exit(1);
+}
+
 const hasBun = spawnSync("bun", ["--version"], { stdio: "ignore" }).status === 0;
 
-const command = hasBun
-  ? ["bun", entryFile, ...argv]
-  : [process.execPath, "--import", "tsx", entryFile, ...argv];
+const command = hasBun ? ["bun", entryFile, ...argv] : [process.execPath, entryFile, ...argv];
 
 const proc = spawnSync(command[0], command.slice(1), {
   stdio: "inherit",

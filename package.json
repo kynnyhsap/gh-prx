@@ -24,7 +24,7 @@
   },
   "files": [
     "gh-prx",
-    "src",
+    "dist",
     "README.md",
     "LICENSE"
   ],
@@ -33,17 +33,17 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bunx tsgo -p tsconfig.json",
+    "build": "bun build ./src/cli/index.ts --target=node --outdir=dist --sourcemap=external",
     "typecheck": "bunx tsgo --noEmit -p tsconfig.json",
     "lint": "bunx oxlint .",
     "format": "bunx oxfmt .",
     "test": "bun test",
-    "e2e:live": "bash scripts/e2e-live.sh"
+    "e2e:live": "bash scripts/e2e-live.sh",
+    "prepublishOnly": "bun run build && bun run typecheck && bun run lint"
   },
   "dependencies": {
     "goke": "latest",
-    "picocolors": "latest",
-    "tsx": "latest"
+    "picocolors": "latest"
   },
   "devDependencies": {
     "@types/bun": "latest",

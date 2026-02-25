@@ -35,7 +35,7 @@ Most PR debugging loops are fragmented across multiple commands:
 ### Prerequisites
 
 - `gh` CLI authenticated (`gh auth status`)
-- Bun (preferred) or Node.js 22+ (fallback launcher uses `--experimental-strip-types`)
+- Bun (preferred) or Node.js 20+
 
 ### Install from source (local)
 
@@ -152,7 +152,9 @@ PR target resolution behavior:
 The launcher script (`gh-prx`) supports both runtimes:
 
 1. uses Bun if available
-2. otherwise uses Node.js 22+ with `--experimental-strip-types`
+2. otherwise uses Node.js 20+
+
+The CLI is built to `dist/index.js`, then executed by Bun or Node.
 
 This keeps dev ergonomics fast with Bun while remaining Node-compatible.
 

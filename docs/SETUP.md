@@ -4,7 +4,7 @@
 
 - `gh` CLI installed
 - `gh auth login` completed
-- Bun installed (preferred) or Node.js 22+
+- Bun installed (preferred) or Node.js 20+
 
 ## Local setup
 
