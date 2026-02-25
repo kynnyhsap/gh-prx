@@ -32,12 +32,28 @@ Most PR debugging loops are fragmented across multiple commands:
 
 ## Install
 
+### Recommended (default)
+
+```bash
+gh extension install kynnyhsap/gh-prx
+```
+
 ### Prerequisites
 
 - `gh` CLI authenticated (`gh auth status`)
 - Bun (preferred) or Node.js 20+
 
-### Install from source (local)
+### Global install (secondary)
+
+```bash
+npm install -g gh-prx
+# or
+bun add -g gh-prx
+
+gh prx --help
+```
+
+### Manual install from source (secondary)
 
 ```bash
 git clone https://github.com/kynnyhsap/gh-prx
@@ -45,19 +61,6 @@ cd gh-prx
 bun install
 bun run build
 gh extension install .
-```
-
-### Install from GitHub directly
-
-```bash
-gh extension install kynnyhsap/gh-prx
-```
-
-### Install with npm (optional)
-
-```bash
-npm install -g gh-prx
-gh prx --help
 ```
 
 ### Verify
