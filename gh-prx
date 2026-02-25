@@ -1,15 +1,32 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env node
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+import { spawnSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-if command -v bun >/dev/null 2>&1; then
-  exec bun run --silent "$ROOT_DIR/src/cli/index.ts" "$@"
-fi
+const rootDir = dirname(fileURLToPath(import.meta.url));
+const entryFile = resolve(rootDir, "src/cli/index.ts");
+const argv = process.argv.slice(2);
 
-if command -v node >/dev/null 2>&1; then
-  exec node --experimental-strip-types "$ROOT_DIR/src/cli/index.ts" "$@"
-fi
+const nodeMajor = Number((process.versions.node || "0").split(".")[0]);
+if (nodeMajor < 20) {
+  process.stderr.write("error: Node.js 20+ is required (or run with Bun).\n");
+  process.exit(1);
+}
 
-echo "error: neither bun nor node was found in PATH" >&2
-exit 1
+const hasBun = spawnSync("bun", ["--version"], { stdio: "ignore" }).status === 0;
+
+const command = hasBun
+  ? ["bun", entryFile, ...argv]
+  : [process.execPath, "--import", "tsx", entryFile, ...argv];
+
+const proc = spawnSync(command[0], command.slice(1), {
+  stdio: "inherit",
+});
+
+if (proc.error) {
+  process.stderr.write(`error: failed to start runtime: ${proc.error.message}\n`);
+  process.exit(1);
+}
+
+process.exit(proc.status ?? 1);

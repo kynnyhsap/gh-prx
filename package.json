@@ -42,7 +42,8 @@
   },
   "dependencies": {
     "goke": "latest",
-    "picocolors": "latest"
+    "picocolors": "latest",
+    "tsx": "latest"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -51,6 +52,6 @@
     "oxlint": "latest"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }
