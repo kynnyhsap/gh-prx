@@ -2,10 +2,14 @@ import type { RepoRef, ReviewThread } from "../domain/types";
 import { queryGraphql } from "../github/graphql";
 
 const THREADS_QUERY = `
-query($owner: String!, $name: String!, $number: Int!) {
+query($owner: String!, $name: String!, $number: Int!, $after: String) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
-      reviewThreads(first: 100) {
+      reviewThreads(first: 100, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
         nodes {
           id
           isResolved
@@ -53,6 +57,10 @@ export function getThreads(
       repository: {
         pullRequest: {
           reviewThreads: {
+            pageInfo: {
+              hasNextPage: boolean;
+              endCursor: string | null;
+            };
             nodes: Array<{
               id: string;
               isResolved: boolean;
@@ -74,27 +82,47 @@ export function getThreads(
     };
   };
 
-  const res = queryGraphql<Response>(
-    THREADS_QUERY,
-    { owner: repo.owner, name: repo.name, number: prNumber },
-    repo.fullName,
-  );
+  const mapped: ReviewThread[] = [];
+  let after: string | null = null;
 
-  const nodes = res.data.repository.pullRequest.reviewThreads.nodes;
-  const mapped = nodes.map((node) => {
-    const latest = node.comments.nodes[0];
-    return {
-      id: node.id,
-      isResolved: node.isResolved,
-      isOutdated: node.isOutdated,
-      path: node.path,
-      line: node.line,
-      latestAuthor: latest?.author?.login || "unknown",
-      latestBody: latest?.body || "",
-      latestUpdatedAt: latest?.updatedAt || "",
-      latestUrl: latest?.url || "",
-    } satisfies ReviewThread;
-  });
+  while (true) {
+    const res: Response = queryGraphql<Response>(
+      THREADS_QUERY,
+      {
+        owner: repo.owner,
+        name: repo.name,
+        number: prNumber,
+        after,
+      },
+      repo.fullName,
+    );
+
+    const connection: Response["data"]["repository"]["pullRequest"]["reviewThreads"] =
+      res.data.repository.pullRequest.reviewThreads;
+    mapped.push(
+      ...connection.nodes.map(
+        (node: Response["data"]["repository"]["pullRequest"]["reviewThreads"]["nodes"][number]) => {
+          const latest = node.comments.nodes[0];
+          return {
+            id: node.id,
+            isResolved: node.isResolved,
+            isOutdated: node.isOutdated,
+            path: node.path,
+            line: node.line,
+            latestAuthor: latest?.author?.login || "unknown",
+            latestBody: latest?.body || "",
+            latestUpdatedAt: latest?.updatedAt || "",
+            latestUrl: latest?.url || "",
+          } satisfies ReviewThread;
+        },
+      ),
+    );
+
+    if (!connection.pageInfo.hasNextPage || !connection.pageInfo.endCursor) {
+      break;
+    }
+    after = connection.pageInfo.endCursor;
+  }
 
   return unresolvedOnly ? mapped.filter((t) => !t.isResolved) : mapped;
 }

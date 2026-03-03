@@ -27,8 +27,13 @@ Most PR debugging loops are fragmented across multiple commands:
 - CI run/job summaries (`ci status`)
 - Failure-focused log triage (`ci logs --failed`)
 - Check annotation diagnostics (`ci annotations`)
+- One-shot CI failure diagnosis (`ci diagnose`)
 - Polling watch mode with fail-fast exit (`ci watch --fail-fast`)
 - Opinionated blocker diagnosis (`doctor`)
+- Single actionable next-step planning (`next`)
+- Agent profile (`--agent`) with JSON/no-color/smart defaults
+- Explicit target typing (`--pr`, `--run`, `pr:`, `run:`)
+- Sticky repo/target context (`use`)
 
 ## Install
 
@@ -66,7 +71,14 @@ All commands support:
 
 - `--format text|json|jsonl` (default: `text`)
 - `--repo owner/name` (optional override)
+- `--agent` (agent-optimized defaults)
 - `--no-color` (also honors `NO_COLOR`)
+
+Targeted commands also support:
+
+- `--pr <target>` to force PR resolution
+- `--run <id>` to force run-id resolution
+- `pr:<target>` / `run:<id>` prefixed targets
 
 ### Top-level commands
 
@@ -77,8 +89,11 @@ All commands support:
 - `gh prx ci status [<pr>|<branch>|<run-id>]`
 - `gh prx ci logs [<pr>|<branch>|<run-id>] [--failed] [--job <id>] [--tail <n>]`
 - `gh prx ci annotations [<pr>|<branch>|<run-id>] [--failed]`
+- `gh prx ci diagnose [<pr>|<branch>|<run-id>] [--tail <n>] [--max-jobs <n>]`
 - `gh prx ci watch [<pr>|<branch>|<run-id>] [--fail-fast] [--interval <sec>] [--timeout <sec>]`
+- `gh prx next [<pr>|<branch>]`
 - `gh prx doctor [<pr>|<branch>]`
+- `gh prx use [<pr>|<branch>|<run-id>] [--clear]`
 
 For complete option docs and examples see `docs/COMMANDS.md`.
 
@@ -94,6 +109,7 @@ gh prx context
 
 ```bash
 gh prx threads list --unresolved
+gh prx next
 gh prx context
 gh prx doctor
 ```
@@ -102,6 +118,7 @@ gh prx doctor
 
 ```bash
 gh prx ci status
+gh prx ci diagnose
 gh prx ci logs --failed --tail 200
 gh prx ci annotations --failed
 ```
@@ -110,6 +127,15 @@ gh prx ci annotations --failed
 
 ```bash
 gh prx ci watch --fail-fast --format jsonl
+```
+
+### 5) Sticky target for repeated loops
+
+```bash
+gh prx use pr:123 --repo owner/repo
+gh prx context
+gh prx next
+gh prx use --clear
 ```
 
 ## Output formats
@@ -132,12 +158,14 @@ gh prx context --no-color
 `gh-prx` resolves repository in this order:
 
 1. explicit `--repo owner/name`
-2. current git repo via `gh repo view`
+2. sticky context from `gh prx use`
+3. current git repo via `gh repo view`
 
 PR target resolution behavior:
 
 - If you pass `<pr>`/`<branch>`, that target is used.
-- If omitted, current branch PR is used.
+- Else if sticky context exists, sticky target is used.
+- If omitted and no sticky target exists, current branch PR is used.
 - If no PR is associated, a clear error is returned.
 
 ## Runtime behavior (Bun + Node)

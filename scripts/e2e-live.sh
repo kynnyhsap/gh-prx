@@ -11,6 +11,8 @@ echo "Working dir: $GH_PRX_E2E_CWD"
 
 gh auth status >/dev/null
 
+bun run build
+
 bun test test/e2e/live-smoke.test.ts
 
 echo "Live readonly e2e checks passed."

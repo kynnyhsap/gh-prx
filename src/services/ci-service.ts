@@ -19,22 +19,82 @@ interface GhRunView {
   status: string;
   conclusion: string | null;
   url: string;
-  jobs: Array<{
-    databaseId: number;
-    name: string;
-    status: string;
-    conclusion: string | null;
-    startedAt?: string;
-    completedAt?: string;
-  }>;
+}
+
+interface GhJob {
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  started_at?: string;
+  completed_at?: string;
+  check_run_url: string;
+}
+
+interface JobsResponse {
+  jobs: GhJob[];
 }
 
 function isNumeric(value: string | undefined): boolean {
   return Boolean(value && /^\d+$/.test(value));
 }
 
-export function resolveRunId(repo: RepoRef, target?: string): number {
-  if (target && isNumeric(target)) {
+function parseCheckRunId(checkRunUrl: string): number | null {
+  const raw = checkRunUrl.split("/").pop();
+  if (!raw || !isNumeric(raw)) return null;
+  return Number(raw);
+}
+
+function listRunJobs(repo: RepoRef, runId: number): GhJob[] {
+  const jobs: GhJob[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = getJson<JobsResponse>(
+      `repos/${repo.fullName}/actions/runs/${runId}/jobs?per_page=100&page=${page}`,
+      repo.fullName,
+    );
+    jobs.push(...response.jobs);
+
+    if (response.jobs.length < 100) break;
+    page += 1;
+  }
+
+  return jobs;
+}
+
+function listAnnotationsForCheckRun(repo: RepoRef, checkRunId: number): Annotation[] {
+  type AnnotationResponse = { message: string } & Annotation;
+  const annotations: Annotation[] = [];
+  let page = 1;
+
+  while (true) {
+    const pageResult = getJson<AnnotationResponse[]>(
+      `repos/${repo.fullName}/check-runs/${checkRunId}/annotations?per_page=100&page=${page}`,
+      repo.fullName,
+    );
+    annotations.push(...pageResult);
+
+    if (pageResult.length < 100) break;
+    page += 1;
+  }
+
+  return annotations;
+}
+
+export function resolveRunId(
+  repo: RepoRef,
+  target?: string,
+  targetMode: "auto" | "pr" | "run" = "auto",
+): number {
+  if (targetMode === "run") {
+    if (!target || !isNumeric(target)) {
+      throw new CliError("Run target must be a numeric workflow run id.");
+    }
+    return Number(target);
+  }
+
+  if (target && targetMode === "auto" && isNumeric(target)) {
     if (target.length >= 7) return Number(target);
   }
 
@@ -63,9 +123,11 @@ export function resolveRunId(repo: RepoRef, target?: string): number {
 
 export function getRunSummary(repo: RepoRef, runId: number): RunSummary {
   const run = ghJson<GhRunView>(
-    ["run", "view", String(runId), "--json", "databaseId,workflowName,status,conclusion,url,jobs"],
+    ["run", "view", String(runId), "--json", "databaseId,workflowName,status,conclusion,url"],
     { repo: repo.fullName },
   );
+
+  const jobs = listRunJobs(repo, runId);
 
   return {
     databaseId: run.databaseId,
@@ -73,7 +135,14 @@ export function getRunSummary(repo: RepoRef, runId: number): RunSummary {
     status: run.status,
     conclusion: run.conclusion,
     url: run.url,
-    jobs: run.jobs,
+    jobs: jobs.map((job) => ({
+      databaseId: job.id,
+      name: job.name,
+      status: job.status,
+      conclusion: job.conclusion,
+      startedAt: job.started_at,
+      completedAt: job.completed_at,
+    })),
   };
 }
 
@@ -96,30 +165,14 @@ export function getRunLogs(
 }
 
 export function getAnnotations(repo: RepoRef, runId: number, failedOnly: boolean): Annotation[] {
-  type JobsResponse = {
-    jobs: Array<{
-      id: number;
-      name: string;
-      conclusion: string | null;
-      check_run_url: string;
-    }>;
-  };
-
-  const jobs = getJson<JobsResponse>(
-    `repos/${repo.fullName}/actions/runs/${runId}/jobs`,
-    repo.fullName,
-  ).jobs;
+  const jobs = listRunJobs(repo, runId);
   const selected = failedOnly ? jobs.filter((j) => j.conclusion === "failure") : jobs;
 
   const annotations: Annotation[] = [];
   for (const job of selected) {
-    const checkRunId = job.check_run_url.split("/").pop();
+    const checkRunId = parseCheckRunId(job.check_run_url);
     if (!checkRunId) continue;
-    type AnnotationResponse = { message: string } & Annotation;
-    const jobAnnotations = getJson<AnnotationResponse[]>(
-      `repos/${repo.fullName}/check-runs/${checkRunId}/annotations`,
-      repo.fullName,
-    );
+    const jobAnnotations = listAnnotationsForCheckRun(repo, checkRunId);
     annotations.push(...jobAnnotations);
   }
   return annotations;

@@ -4,7 +4,14 @@ All commands support:
 
 - `--format text|json|jsonl` (default `text`)
 - `--repo owner/name` (optional)
+- `--agent` (agent profile: json/no-color/smart defaults)
 - `--no-color` (also honors `NO_COLOR`)
+
+Commands with `[target]` also support:
+
+- `--pr <target>` force PR resolution
+- `--run <id>` force run-id resolution
+- `pr:<target>` or `run:<id>` target prefixes
 
 ## `gh prx context [<pr>|<branch>]`
 
@@ -15,6 +22,7 @@ Examples:
 ```bash
 gh prx context
 gh prx context 123
+gh prx context pr:my-feature-branch --repo owner/repo
 gh prx context my-feature-branch --format json
 ```
 
@@ -57,8 +65,8 @@ Examples:
 
 ```bash
 gh prx ci status
-gh prx ci status 123
-gh prx ci status 18840201234
+gh prx ci status --pr 123
+gh prx ci status run:18840201234
 ```
 
 ## `gh prx ci logs [<pr>|<branch>|<run-id>] [--failed] [--job <id>] [--tail <n>]`
@@ -69,7 +77,7 @@ Examples:
 
 ```bash
 gh prx ci logs --failed
-gh prx ci logs 18840201234 --job 56499230103 --tail 300
+gh prx ci logs run:18840201234 --job 56499230103 --tail 300
 ```
 
 ## `gh prx ci annotations [<pr>|<branch>|<run-id>] [--failed]`
@@ -80,7 +88,18 @@ Examples:
 
 ```bash
 gh prx ci annotations --failed
-gh prx ci annotations 18840201234 --format json
+gh prx ci annotations run:18840201234 --format json
+```
+
+## `gh prx ci diagnose [<pr>|<branch>|<run-id>] [--tail <n>] [--max-jobs <n>]`
+
+Builds a failure-focused payload: failing jobs, targeted log tails, and annotations grouped by file.
+
+Examples:
+
+```bash
+gh prx ci diagnose
+gh prx ci diagnose run:18840201234 --tail 300 --max-jobs 2
 ```
 
 ## `gh prx ci watch [<pr>|<branch>|<run-id>] [--fail-fast] [--interval <sec>] [--timeout <sec>]`
@@ -91,7 +110,18 @@ Examples:
 
 ```bash
 gh prx ci watch --fail-fast
-gh prx ci watch --interval 5 --timeout 1200 --format jsonl
+gh prx ci watch run:18840201234 --interval 5 --timeout 1200 --format jsonl
+```
+
+## `gh prx next [<pr>|<branch>]`
+
+Returns one machine-friendly actionable next step for agents.
+
+Examples:
+
+```bash
+gh prx next
+gh prx next pr:123 --format json
 ```
 
 ## `gh prx doctor [<pr>|<branch>]`
@@ -103,4 +133,17 @@ Examples:
 ```bash
 gh prx doctor
 gh prx doctor 123 --format json
+```
+
+## `gh prx use [<pr>|<branch>|<run-id>] [--clear]`
+
+Shows or persists sticky repo/target context used when later commands omit target/repo.
+
+Examples:
+
+```bash
+gh prx use
+gh prx use pr:123 --repo owner/repo
+gh prx use run:18840201234 --repo owner/repo
+gh prx use --clear
 ```

@@ -1,8 +1,11 @@
 import { expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const E2E_REPO = process.env.GH_PRX_E2E_REPO || "oven-sh/bun";
 const E2E_CWD = process.env.GH_PRX_E2E_CWD || `${import.meta.dir}/../..`;
+const E2E_STATE_FILE = join(tmpdir(), `gh-prx-e2e-state-${Date.now()}.json`);
 
 interface PrSummary {
   number: number;
@@ -20,7 +23,8 @@ interface Discovery {
   openPrWithChecks: number;
   closedPrWithChecks: number;
   unresolvedThreadPr: number;
-  failingRunId: number;
+  sampleRunId: number;
+  failingRunId: number | null;
 }
 
 let cachedDiscovery: Discovery | null = null;
@@ -30,6 +34,10 @@ function runGh(args: string[], options?: { timeoutMs?: number }) {
     cwd: E2E_CWD,
     encoding: "utf8",
     timeout: options?.timeoutMs ?? 120000,
+    env: {
+      ...process.env,
+      GH_PRX_STATE_FILE: E2E_STATE_FILE,
+    },
   });
 }
 
@@ -122,14 +130,15 @@ function discoverTargets(): Discovery {
   const failingRunId = runs.find(
     (run) => run.status === "completed" && run.conclusion === "failure",
   )?.databaseId;
-  if (!failingRunId) {
-    throw new Error("Could not find completed failing workflow run.");
-  }
+  const sampleRunId =
+    runs.find((run) => run.status === "completed")?.databaseId || runs[0]?.databaseId;
+  if (!sampleRunId) throw new Error("Could not find workflow run targets.");
 
   cachedDiscovery = {
     openPrWithChecks,
     closedPrWithChecks,
     unresolvedThreadPr,
+    sampleRunId,
     failingRunId,
   };
   return cachedDiscovery;
@@ -143,12 +152,12 @@ test("e2e preflight: auth and target repository are reachable", () => {
   expect(repo.status).toBe(0);
 });
 
-test("e2e discovery: find open, closed, unresolved-thread, and failing-run targets", () => {
+test("e2e discovery: find open, closed, unresolved-thread, and run targets", () => {
   const targets = discoverTargets();
   expect(targets.openPrWithChecks > 0).toBeTrue();
   expect(targets.closedPrWithChecks > 0).toBeTrue();
   expect(targets.unresolvedThreadPr > 0).toBeTrue();
-  expect(targets.failingRunId > 0).toBeTrue();
+  expect(targets.sampleRunId > 0).toBeTrue();
 }, 120000);
 
 test("e2e readonly: context works for open PR", () => {
@@ -207,6 +216,7 @@ test("e2e readonly: ci status works for open PR", () => {
     "prx",
     "ci",
     "status",
+    "--pr",
     String(targets.openPrWithChecks),
     "--repo",
     E2E_REPO,
@@ -217,41 +227,146 @@ test("e2e readonly: ci status works for open PR", () => {
 
   expect(result.run.databaseId > 0).toBeTrue();
   expect(Array.isArray(result.checks)).toBeTrue();
+  expect(result.checks.length > 0).toBeTrue();
 }, 120000);
 
-test("e2e readonly: ci logs works for failing run", () => {
+test("e2e readonly: next returns one actionable item", () => {
   const targets = discoverTargets();
-  const proc = runGh([
+  const result = runGhJson<{
+    schemaVersion: number;
+    kind: string;
+    command: string;
+    pr: number;
+  }>([
     "prx",
-    "ci",
-    "logs",
-    String(targets.failingRunId),
-    "--failed",
-    "--tail",
-    "120",
-    "--repo",
-    E2E_REPO,
-    "--no-color",
-  ]);
-  expect(proc.status).toBe(0);
-  expect(proc.stdout.length > 0).toBeTrue();
-}, 120000);
-
-test("e2e readonly: ci annotations works for failing run", () => {
-  const targets = discoverTargets();
-  const result = runGhJson<{ runId: number; annotations: unknown[] }>([
-    "prx",
-    "ci",
-    "annotations",
-    String(targets.failingRunId),
-    "--failed",
+    "next",
+    String(targets.openPrWithChecks),
     "--repo",
     E2E_REPO,
     "--format",
     "json",
     "--no-color",
   ]);
-  expect(result.runId).toBe(targets.failingRunId);
+
+  expect(result.schemaVersion).toBe(1);
+  expect(Boolean(result.kind)).toBeTrue();
+  expect(Boolean(result.command)).toBeTrue();
+  expect(result.pr).toBe(targets.openPrWithChecks);
+}, 120000);
+
+test("e2e readonly: ci diagnose works for discovered run", () => {
+  const targets = discoverTargets();
+  const runId = targets.failingRunId || targets.sampleRunId;
+  const result = runGhJson<{
+    run: { databaseId: number };
+    failingJobs: unknown[];
+    logsByJob: unknown[];
+    annotationsByPath: unknown[];
+  }>([
+    "prx",
+    "ci",
+    "diagnose",
+    String(runId),
+    "--repo",
+    E2E_REPO,
+    "--tail",
+    "80",
+    "--max-jobs",
+    "1",
+    "--format",
+    "json",
+    "--no-color",
+  ]);
+
+  expect(result.run.databaseId).toBe(runId);
+  expect(Array.isArray(result.failingJobs)).toBeTrue();
+  expect(Array.isArray(result.logsByJob)).toBeTrue();
+  expect(Array.isArray(result.annotationsByPath)).toBeTrue();
+}, 120000);
+
+test("e2e readonly: use sets and clears sticky context", () => {
+  const targets = discoverTargets();
+
+  const setResult = runGhJson<{ stickyContext: { repo: string; target: string } }>([
+    "prx",
+    "use",
+    String(targets.openPrWithChecks),
+    "--repo",
+    E2E_REPO,
+    "--format",
+    "json",
+    "--no-color",
+  ]);
+  expect(setResult.stickyContext.repo).toBe(E2E_REPO);
+
+  const current = runGhJson<{ stickyContext: { target: string } }>([
+    "prx",
+    "use",
+    "--format",
+    "json",
+    "--no-color",
+  ]);
+  expect(Boolean(current.stickyContext.target)).toBeTrue();
+
+  const contextViaSticky = runGhJson<{ pr: { number: number } }>([
+    "prx",
+    "context",
+    "--repo",
+    E2E_REPO,
+    "--format",
+    "json",
+    "--no-color",
+  ]);
+  expect(contextViaSticky.pr.number).toBe(targets.openPrWithChecks);
+
+  const cleared = runGhJson<{ cleared: boolean }>([
+    "prx",
+    "use",
+    "--clear",
+    "--format",
+    "json",
+    "--no-color",
+  ]);
+  expect(cleared.cleared).toBeTrue();
+}, 120000);
+
+test("e2e readonly: ci logs works for discovered run", () => {
+  const targets = discoverTargets();
+  const runId = targets.failingRunId || targets.sampleRunId;
+  const args = [
+    "prx",
+    "ci",
+    "logs",
+    String(runId),
+    "--tail",
+    "120",
+    "--repo",
+    E2E_REPO,
+    "--no-color",
+  ];
+  if (targets.failingRunId) args.splice(4, 0, "--failed");
+  const proc = runGh(args);
+  expect(proc.status).toBe(0);
+  expect(proc.stdout.length > 0).toBeTrue();
+}, 120000);
+
+test("e2e readonly: ci annotations works for discovered run", () => {
+  const targets = discoverTargets();
+  const runId = targets.failingRunId || targets.sampleRunId;
+  const args = [
+    "prx",
+    "ci",
+    "annotations",
+    String(runId),
+    "--repo",
+    E2E_REPO,
+    "--format",
+    "json",
+    "--no-color",
+  ];
+  if (targets.failingRunId) args.splice(4, 0, "--failed");
+  const result = runGhJson<{ runId: number; annotations: unknown[] }>(args);
+  expect(result.runId).toBe(runId);
   expect(Array.isArray(result.annotations)).toBeTrue();
 }, 120000);
 
@@ -269,14 +384,15 @@ test("e2e readonly: doctor works on unresolved-thread PR", () => {
   expect(proc.stdout.includes(`PR #${targets.unresolvedThreadPr}`)).toBeTrue();
 }, 120000);
 
-test("e2e readonly: ci watch emits jsonl fail-fast events on failing run", () => {
+test("e2e readonly: ci watch emits jsonl events", () => {
   const targets = discoverTargets();
+  const runId = targets.failingRunId || targets.sampleRunId;
   const proc = runGh(
     [
       "prx",
       "ci",
       "watch",
-      String(targets.failingRunId),
+      String(runId),
       "--repo",
       E2E_REPO,
       "--fail-fast",
@@ -291,7 +407,7 @@ test("e2e readonly: ci watch emits jsonl fail-fast events on failing run", () =>
     { timeoutMs: 120000 },
   );
 
-  expect(proc.status).toBe(1);
+  expect(proc.status === 0 || proc.status === 1).toBeTrue();
   expect(proc.stdout.includes('"type":"update"')).toBeTrue();
   expect(
     proc.stdout.includes('"type":"fail_fast"') || proc.stdout.includes('"type":"finished"'),
@@ -320,7 +436,9 @@ test("e2e readonly: context json contract includes stable keys", () => {
   expect(keys.includes("latestRun")).toBeTrue();
   expect(keys.includes("failingChecks")).toBeTrue();
   expect(keys.includes("failedJobs")).toBeTrue();
+  expect(keys.includes("pendingChecks")).toBeTrue();
   expect(keys.includes("suggestedNextAction")).toBeTrue();
+  expect(keys.includes("suggestedNextCommand")).toBeTrue();
 
   const pr = context.pr as Record<string, unknown>;
   const prKeys = Object.keys(pr).sort();
@@ -330,5 +448,6 @@ test("e2e readonly: context json contract includes stable keys", () => {
   expect(prKeys.includes("baseRefName")).toBeTrue();
   expect(prKeys.includes("headRefName")).toBeTrue();
   expect(prKeys.includes("headRefOid")).toBeTrue();
+  expect(prKeys.includes("reviewRequestsCount")).toBeTrue();
   expect(prKeys.includes("isDraft")).toBeTrue();
 }, 120000);

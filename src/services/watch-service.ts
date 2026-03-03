@@ -7,6 +7,7 @@ function sleep(ms: number): Promise<void> {
 
 interface WatchOptions {
   target?: string;
+  targetMode?: "auto" | "pr" | "run";
   intervalSec: number;
   timeoutSec: number;
   failFast: boolean;
@@ -42,7 +43,7 @@ function printEvent(format: OutputFormat, event: Record<string, unknown>): void 
 }
 
 export async function watchCi(repo: RepoRef, options: WatchOptions): Promise<number> {
-  const runId = resolveRunId(repo, options.target);
+  const runId = resolveRunId(repo, options.target, options.targetMode || "auto");
   const start = Date.now();
   let lastState = "";
 

@@ -11,7 +11,9 @@ interface GhPr {
   headRefName: string;
   headRefOid: string;
   mergeStateStatus?: string;
+  mergeable?: string;
   reviewDecision?: string;
+  reviewRequests?: Array<unknown>;
   isDraft: boolean;
 }
 
@@ -23,7 +25,9 @@ const prFields = [
   "headRefName",
   "headRefOid",
   "mergeStateStatus",
+  "mergeable",
   "reviewDecision",
+  "reviewRequests",
   "isDraft",
 ].join(",");
 
@@ -65,7 +69,10 @@ export function resolvePr(target: string | undefined, repo: RepoRef): PrRef {
   if (!pr || !pr.number) {
     throw new CliError("Could not resolve PR from target. Try passing a PR number.");
   }
-  return pr;
+  return {
+    ...pr,
+    reviewRequestsCount: Array.isArray(pr.reviewRequests) ? pr.reviewRequests.length : 0,
+  };
 }
 
 function currentBranch(): string | null {
