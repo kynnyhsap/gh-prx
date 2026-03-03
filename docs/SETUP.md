@@ -50,3 +50,22 @@ Example:
 ```bash
 GH_PRX_E2E_REPO=cli/cli GH_PRX_E2E_CWD=$(pwd) bun run e2e:live
 ```
+
+## Live mutating e2e (use carefully)
+
+This suite performs real CI mutations (`rerun`, `cancel`) and is intentionally opt-in.
+
+```bash
+bun run e2e:mutate
+```
+
+Defaults:
+
+- `GH_PRX_MUTATE_REPO=oven-sh/bun`
+- `GH_PRX_MUTATE_AUTHOR` unset (optional)
+
+Override target/reviewer scope by setting:
+
+- `GH_PRX_MUTATE_REPO`
+- `GH_PRX_MUTATE_AUTHOR`
+- `GH_PRX_E2E_CWD` (optional working directory)

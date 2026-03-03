@@ -25,6 +25,8 @@ Use this skill to iterate on GitHub PRs quickly with `gh prx`.
 - CI diagnose: `gh prx ci diagnose`
 - Fail logs: `gh prx ci logs --failed`
 - Diagnostics: `gh prx ci annotations --failed`
+- Rerun CI: `gh prx ci rerun --failed`
+- Cancel CI: `gh prx ci cancel`
 - Watch mode: `gh prx ci watch --fail-fast --format jsonl`
 - Blocker diagnosis: `gh prx doctor`
 - One next step: `gh prx next`

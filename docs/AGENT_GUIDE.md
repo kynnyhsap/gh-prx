@@ -8,6 +8,7 @@ Use this loop for deterministic PR iteration:
 4. Use a targeted command:
    - review work: `gh prx threads list --unresolved`
    - CI work: `gh prx ci status`, `gh prx ci diagnose`, `gh prx ci logs --failed`, `gh prx ci annotations --failed`
+   - CI mutate (when explicitly requested): `gh prx ci rerun`, `gh prx ci cancel`
 5. Re-run `gh prx context --agent`
 6. Repeat until `ready_to_merge`
 

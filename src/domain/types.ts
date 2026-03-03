@@ -141,3 +141,16 @@ export interface CiDiagnosis {
   suggestedNextAction: string;
   suggestedNextCommand: string;
 }
+
+export interface CiMutationResult {
+  schemaVersion: number;
+  repo: string;
+  action: "rerun" | "cancel";
+  runId: number;
+  mode: "run" | "failed" | "job";
+  jobId?: number;
+  force?: boolean;
+  debug?: boolean;
+  command: string;
+  requested: true;
+}

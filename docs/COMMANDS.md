@@ -91,6 +91,34 @@ gh prx ci annotations --failed
 gh prx ci annotations run:18840201234 --format json
 ```
 
+## `gh prx ci rerun [<pr>|<branch>|<run-id>] [--failed] [--job <id>] [--debug]`
+
+Requests a CI rerun. Supports whole-run rerun, failed-jobs rerun, or single-job rerun.
+
+Notes:
+
+- `--job` expects the Actions job database id (not the URL path segment).
+- Use mutating commands intentionally on shared/prod repos.
+
+Examples:
+
+```bash
+gh prx ci rerun
+gh prx ci rerun --failed
+gh prx ci rerun run:18840201234 --job 56499230103
+```
+
+## `gh prx ci cancel [<pr>|<branch>|<run-id>] [--force]`
+
+Cancels a CI run.
+
+Examples:
+
+```bash
+gh prx ci cancel
+gh prx ci cancel run:18840201234 --force
+```
+
 ## `gh prx ci diagnose [<pr>|<branch>|<run-id>] [--tail <n>] [--max-jobs <n>]`
 
 Builds a failure-focused payload: failing jobs, targeted log tails, and annotations grouped by file.

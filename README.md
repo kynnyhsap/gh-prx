@@ -28,6 +28,7 @@ Most PR debugging loops are fragmented across multiple commands:
 - Failure-focused log triage (`ci logs --failed`)
 - Check annotation diagnostics (`ci annotations`)
 - One-shot CI failure diagnosis (`ci diagnose`)
+- CI mutating controls (`ci rerun`, `ci cancel`)
 - Polling watch mode with fail-fast exit (`ci watch --fail-fast`)
 - Opinionated blocker diagnosis (`doctor`)
 - Single actionable next-step planning (`next`)
@@ -89,6 +90,8 @@ Targeted commands also support:
 - `gh prx ci status [<pr>|<branch>|<run-id>]`
 - `gh prx ci logs [<pr>|<branch>|<run-id>] [--failed] [--job <id>] [--tail <n>]`
 - `gh prx ci annotations [<pr>|<branch>|<run-id>] [--failed]`
+- `gh prx ci rerun [<pr>|<branch>|<run-id>] [--failed] [--job <id>] [--debug]`
+- `gh prx ci cancel [<pr>|<branch>|<run-id>] [--force]`
 - `gh prx ci diagnose [<pr>|<branch>|<run-id>] [--tail <n>] [--max-jobs <n>]`
 - `gh prx ci watch [<pr>|<branch>|<run-id>] [--fail-fast] [--interval <sec>] [--timeout <sec>]`
 - `gh prx next [<pr>|<branch>]`

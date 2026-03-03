@@ -1,4 +1,4 @@
-import type { Annotation, RepoRef, RunSummary } from "../domain/types";
+import type { Annotation, CiMutationResult, RepoRef, RunSummary } from "../domain/types";
 import { getJson } from "../github/rest";
 import { ghExec, ghJson } from "../util/gh";
 import { CliError } from "../util/errors";
@@ -176,4 +176,67 @@ export function getAnnotations(repo: RepoRef, runId: number, failedOnly: boolean
     annotations.push(...jobAnnotations);
   }
   return annotations;
+}
+
+export function rerunRun(
+  repo: RepoRef,
+  runId: number,
+  options: {
+    failedOnly: boolean;
+    jobId?: number;
+    debug: boolean;
+  },
+): CiMutationResult {
+  if (options.failedOnly && options.jobId) {
+    throw new CliError("Use either --failed or --job, not both");
+  }
+
+  const args = ["run", "rerun", String(runId)];
+  let mode: CiMutationResult["mode"] = "run";
+
+  if (options.failedOnly) {
+    args.push("--failed");
+    mode = "failed";
+  }
+
+  if (options.jobId) {
+    args.push("--job", String(options.jobId));
+    mode = "job";
+  }
+
+  if (options.debug) {
+    args.push("--debug");
+  }
+
+  ghExec(args, { repo: repo.fullName });
+
+  return {
+    schemaVersion: 1,
+    repo: repo.fullName,
+    action: "rerun",
+    runId,
+    mode,
+    jobId: options.jobId,
+    debug: options.debug || undefined,
+    command: `gh ${args.join(" ")} --repo ${repo.fullName}`,
+    requested: true,
+  };
+}
+
+export function cancelRun(repo: RepoRef, runId: number, force: boolean): CiMutationResult {
+  const args = ["run", "cancel", String(runId)];
+  if (force) args.push("--force");
+
+  ghExec(args, { repo: repo.fullName });
+
+  return {
+    schemaVersion: 1,
+    repo: repo.fullName,
+    action: "cancel",
+    runId,
+    mode: "run",
+    force: force || undefined,
+    command: `gh ${args.join(" ")} --repo ${repo.fullName}`,
+    requested: true,
+  };
 }

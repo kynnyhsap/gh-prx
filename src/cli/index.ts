@@ -6,11 +6,19 @@ import {
   renderAnnotations,
   renderChecks,
   renderCiDiagnosis,
+  renderCiMutation,
   renderNextStep,
   renderRun,
   renderThreads,
 } from "../output/text";
-import { getAnnotations, getRunLogs, getRunSummary, resolveRunId } from "../services/ci-service";
+import {
+  cancelRun,
+  getAnnotations,
+  getRunLogs,
+  getRunSummary,
+  rerunRun,
+  resolveRunId,
+} from "../services/ci-service";
 import { buildContext } from "../services/context-service";
 import { diagnoseCi } from "../services/diagnose-service";
 import { runDoctor } from "../services/doctor-service";
@@ -323,6 +331,79 @@ addCommonOptions(
             printResult(format, { runId, failedOnly, annotations }, () =>
               renderAnnotations(annotations),
             );
+          },
+        ),
+      ),
+  ),
+);
+
+addCommonOptions(
+  addTargetOptions(
+    cli
+      .command("ci rerun [target]", "Rerun a workflow run, failed jobs, or a specific job")
+      .option("--failed", "Rerun only failed jobs")
+      .option("--job [id]", "Rerun one job by database job id")
+      .option("--debug", "Enable Actions debug logging for rerun")
+      .example("gh prx ci rerun")
+      .example("gh prx ci rerun --failed")
+      .example("gh prx ci rerun run:22305316388 --job 61631229417")
+      .action(
+        withErrorHandling(
+          (
+            target: string | undefined,
+            options: TargetOptions & {
+              failed?: boolean;
+              job?: string;
+              debug?: boolean;
+            },
+          ) => {
+            applyColorOption(options);
+            const format = parseFormat(options.format, Boolean(options.agent));
+            const { repo, parsedTarget } = resolveRepoAndTarget(target, options);
+            const serviceTarget = targetToServiceInput(parsedTarget);
+            const runId = resolveRunId(repo, serviceTarget.target, serviceTarget.mode);
+            const jobId = options.job ? Number(options.job) : undefined;
+
+            if (options.job && (!Number.isFinite(jobId) || (jobId || 0) <= 0)) {
+              throw new CliError("--job must be a numeric job id");
+            }
+
+            const result = rerunRun(repo, runId, {
+              failedOnly: Boolean(options.failed),
+              jobId,
+              debug: Boolean(options.debug),
+            });
+
+            printResult(format, result, () => renderCiMutation(result));
+          },
+        ),
+      ),
+  ),
+);
+
+addCommonOptions(
+  addTargetOptions(
+    cli
+      .command("ci cancel [target]", "Cancel a workflow run")
+      .option("--force", "Force cancel a workflow run")
+      .example("gh prx ci cancel")
+      .example("gh prx ci cancel run:22305316388")
+      .action(
+        withErrorHandling(
+          (
+            target: string | undefined,
+            options: TargetOptions & {
+              force?: boolean;
+            },
+          ) => {
+            applyColorOption(options);
+            const format = parseFormat(options.format, Boolean(options.agent));
+            const { repo, parsedTarget } = resolveRepoAndTarget(target, options);
+            const serviceTarget = targetToServiceInput(parsedTarget);
+            const runId = resolveRunId(repo, serviceTarget.target, serviceTarget.mode);
+            const result = cancelRun(repo, runId, Boolean(options.force));
+
+            printResult(format, result, () => renderCiMutation(result));
           },
         ),
       ),

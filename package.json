@@ -1,6 +1,6 @@
 {
   "name": "gh-prx",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "GitHub CLI extension for agentic PR and CI workflows",
   "keywords": [
     "agent",
@@ -39,6 +39,7 @@
     "format": "bunx oxfmt .",
     "test": "bun test",
     "e2e:live": "bash scripts/e2e-live.sh",
+    "e2e:mutate": "GH_PRX_E2E_MUTATE=1 bun test test/e2e/live-mutate.test.ts",
     "prepublishOnly": "bun run build && bun run typecheck && bun run lint"
   },
   "dependencies": {

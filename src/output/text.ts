@@ -1,5 +1,6 @@
 import type {
   Annotation,
+  CiMutationResult,
   CheckSummary,
   CiDiagnosis,
   NextStep,
@@ -96,4 +97,20 @@ export function renderCiDiagnosis(result: CiDiagnosis): string {
     `${colors.bold("Suggested next action:")} ${result.suggestedNextAction}`,
     `${colors.bold("Suggested command:")} ${colors.cyan(result.suggestedNextCommand)}`,
   ].join("\n\n");
+}
+
+export function renderCiMutation(result: CiMutationResult): string {
+  const colors = c();
+  const details =
+    result.mode === "job"
+      ? `job=${result.jobId}`
+      : result.mode === "failed"
+        ? "failed-jobs"
+        : "full-run";
+  return [
+    colors.bold(`CI ${result.action} requested for run #${result.runId}`),
+    `Scope: ${details}`,
+    `Repo: ${result.repo}`,
+    `Command: ${colors.cyan(result.command)}`,
+  ].join("\n");
 }
