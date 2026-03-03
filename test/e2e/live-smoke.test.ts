@@ -127,21 +127,22 @@ function discoverTargets(): Discovery {
     "databaseId,conclusion,status",
   ]);
 
-  const failingRunId = runs.find(
-    (run) => run.status === "completed" && run.conclusion === "failure",
-  )?.databaseId;
+  const failingRunId =
+    runs.find((run) => run.status === "completed" && run.conclusion === "failure")?.databaseId ??
+    null;
   const sampleRunId =
     runs.find((run) => run.status === "completed")?.databaseId || runs[0]?.databaseId;
   if (!sampleRunId) throw new Error("Could not find workflow run targets.");
 
-  cachedDiscovery = {
+  const discovery: Discovery = {
     openPrWithChecks,
     closedPrWithChecks,
     unresolvedThreadPr,
     sampleRunId,
     failingRunId,
   };
-  return cachedDiscovery;
+  cachedDiscovery = discovery;
+  return discovery;
 }
 
 test("e2e preflight: auth and target repository are reachable", () => {
