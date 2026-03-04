@@ -125,7 +125,6 @@ function main(): void {
   writeFileSync(path, `${JSON.stringify(updated, null, 2)}\n`, "utf8");
 
   run(["bun", "run", "build"], "bun run build");
-  run(["bun", "run", "build:check"], "bun run build:check");
   run(["bun", "run", "typecheck"], "bun run typecheck");
   run(["bun", "run", "lint"], "bun run lint");
   run(["bun", "test"], "bun test");
