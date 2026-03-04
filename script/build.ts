@@ -1,10 +1,13 @@
 #!/usr/bin/env bun
 
-function run(command: string[], label: string): void {
+function run(command: string[], label: string, env?: Record<string, string>): void {
   const proc = Bun.spawnSync(command, {
     stdout: "inherit",
     stderr: "inherit",
-    env: process.env,
+    env: {
+      ...process.env,
+      ...env,
+    },
   });
 
   if (proc.exitCode !== 0) {
@@ -21,4 +24,6 @@ if (!tag) {
 run(["bun", "install", "--frozen-lockfile"], "bun install");
 run(["bun", "run", "typecheck"], "bun run typecheck");
 run(["bun", "run", "lint"], "bun run lint");
-run(["bun", "run", "build:release", "--", tag], "bun run build:release");
+run(["bun", "run", "build:release", "--", tag], "bun run build:release", {
+  GH_PRX_RELEASE_OUTDIR: "dist",
+});
