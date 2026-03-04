@@ -1,6 +1,6 @@
 {
   "name": "gh-prx",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "GitHub CLI extension for agentic PR and CI workflows",
   "keywords": [
     "agent",
