@@ -44,10 +44,16 @@ Most PR debugging loops are fragmented across multiple commands:
 gh extension install kynnyhsap/gh-prx
 ```
 
+This uses precompiled release assets when available, so no local build step is required.
+
 ### Prerequisites
 
 - `gh` CLI authenticated (`gh auth status`)
-- Bun (preferred) or Node.js 20+
+
+For source installs from a local clone, you also need:
+
+- Bun
+- Node.js 20+
 
 ### Manual install from source (secondary)
 
@@ -56,6 +62,13 @@ git clone https://github.com/kynnyhsap/gh-prx
 cd gh-prx
 bun install
 bun run build
+gh extension install .
+```
+
+If you previously installed from GitHub and want to switch back to source mode:
+
+```bash
+gh extension remove prx
 gh extension install .
 ```
 
@@ -171,20 +184,22 @@ PR target resolution behavior:
 - If omitted and no sticky target exists, current branch PR is used.
 - If no PR is associated, a clear error is returned.
 
-## Runtime behavior (Bun + Node)
+## Runtime behavior (release binaries + source fallback)
 
-The launcher script (`gh-prx`) supports both runtimes:
+`gh-prx` supports two distribution modes:
 
-1. uses Bun if available
-2. otherwise uses Node.js 20+
+1. **Release install (`gh extension install kynnyhsap/gh-prx`)**
+   - uses precompiled standalone binaries from GitHub Releases
+   - no local build required
+2. **Source install (`gh extension install .`)**
+   - executes `gh-prx` launcher + `dist/index.js`
+   - Bun is preferred, Node.js 20+ is fallback
 
-The CLI is built to `dist/index.js`, then executed by Bun or Node.
-
-This keeps dev ergonomics fast with Bun while remaining Node-compatible.
+For source installs, the CLI is built to `dist/index.js`, then executed by Bun or Node.
 
 ## Architecture
 
-`gh-prx` is a script extension. GitHub CLI executes the root executable `gh-prx`, and all command behavior is implemented in this repo.
+`gh-prx` ships both as precompiled release binaries and as a script-mode source install. All command behavior is implemented in this repo.
 
 Core layers:
 
@@ -242,7 +257,31 @@ bun run lint
 bun run typecheck
 bun test
 bun run build
+bun run build:check
+bun run build:exe
+bun run release:cut -- patch
 ```
+
+Release binary build (all targets):
+
+```bash
+bun run build:release -- v0.1.3
+```
+
+Release binaries are written to `release-dist/`.
+
+One-command release cut (version bump + checks + commit + tag + push):
+
+```bash
+bun run release:cut -- patch
+```
+
+Accepted targets: `patch`, `minor`, `major`, or explicit `vX.Y.Z`.
+
+## Release automation
+
+Tag pushes trigger `.github/workflows/release.yml`, which uses `cli/gh-extension-precompile@v2` with `script/build.ts`.
+The build script runs lint/typecheck and emits platform binaries to `dist/` so `gh extension install kynnyhsap/gh-prx` can install precompiled assets automatically.
 
 ## End-to-end tests
 

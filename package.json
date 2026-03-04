@@ -33,9 +33,13 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bun build ./src/cli/index.ts --target=node --outdir=dist --sourcemap=external",
+    "build": "bun scripts/build.ts",
+    "build:check": "bun run build && git diff --exit-code -- dist",
+    "build:exe": "bun scripts/build-exe.ts",
+    "build:release": "bun scripts/build-release.ts",
+    "release:cut": "bun scripts/release-cut.ts",
     "typecheck": "bunx tsgo --noEmit -p tsconfig.json",
-    "lint": "bunx oxlint .",
+    "lint": "bunx oxlint . --ignore-pattern \"**/dist/**\" --ignore-pattern \"**/release-dist/**\"",
     "format": "bunx oxfmt .",
     "test": "bun test",
     "e2e:live": "bash scripts/e2e-live.sh",

@@ -16,7 +16,9 @@ if (nodeMajor < 20) {
 }
 
 if (!existsSync(entryFile)) {
-  process.stderr.write("error: build output is missing. Run `bun run build` first.\n");
+  process.stderr.write(
+    "error: build output is missing. Reinstall from a tagged release or run `bun install && bun run build`.\n",
+  );
   process.exit(1);
 }
 

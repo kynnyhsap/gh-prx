@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 import goke from "goke";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { OutputFormat, RepoRef } from "../domain/types";
 import {
   renderAnnotations,
@@ -39,6 +42,35 @@ import {
   toStoredTarget,
   type ParsedTarget,
 } from "../util/target";
+
+declare const GH_PRX_VERSION: string | undefined;
+
+function resolveCliVersion(): string {
+  if (typeof GH_PRX_VERSION === "string" && GH_PRX_VERSION.trim()) {
+    return GH_PRX_VERSION;
+  }
+
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [resolve(here, "../package.json"), resolve(here, "../../package.json")];
+
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) continue;
+
+    try {
+      const raw = readFileSync(candidate, "utf8");
+      const parsed = JSON.parse(raw) as { version?: unknown };
+      if (typeof parsed.version === "string" && parsed.version.trim()) {
+        return parsed.version;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return "0.0.0";
+}
+
+const cliVersion = resolveCliVersion();
 
 interface CommonOptions {
   format?: OutputFormat;
@@ -135,7 +167,7 @@ function withErrorHandling<T extends unknown[]>(
 
 const cli = goke("gh prx")
   .usage("<command> [options]")
-  .version("0.1.0")
+  .version(cliVersion)
   .example("gh prx context")
   .example("gh prx threads list --unresolved")
   .example("gh prx ci watch --fail-fast --format jsonl")

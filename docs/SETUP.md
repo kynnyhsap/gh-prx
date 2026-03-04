@@ -4,7 +4,8 @@
 
 - `gh` CLI installed
 - `gh auth login` completed
-- Bun installed (preferred) or Node.js 20+
+- Bun installed
+- Node.js 20+ (for source launcher mode)
 
 ## Local setup
 
@@ -29,6 +30,11 @@ gh prx doctor
 - Format: `bun run format` (oxfmt)
 - Typecheck: `bun run typecheck` (tsgo)
 - Tests: `bun test`
+- Build JS dist: `bun run build`
+- Verify tracked dist is current: `bun run build:check`
+- Build single-file executable (host): `bun run build:exe`
+- Build all release binaries: `bun run build:release -- vX.Y.Z`
+- Cut and publish release in one command: `bun run release:cut -- patch`
 
 No lint/format config files are required; defaults are used.
 
@@ -69,3 +75,15 @@ Override target/reviewer scope by setting:
 - `GH_PRX_MUTATE_REPO`
 - `GH_PRX_MUTATE_AUTHOR`
 - `GH_PRX_E2E_CWD` (optional working directory)
+
+## Release flow
+
+Tagging with `v*` triggers `.github/workflows/release.yml`.
+
+The release pipeline (via `cli/gh-extension-precompile@v2`):
+
+- runs `script/build.ts`
+- installs dependencies
+- runs typecheck + lint
+- builds standalone Bun executables for Darwin/Linux/Windows (amd64 + arm64)
+- uploads `dist/*` assets to GitHub Releases for `gh extension install` binary installs
