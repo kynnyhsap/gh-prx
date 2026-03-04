@@ -259,7 +259,7 @@ bun test
 bun run build
 bun run build:check
 bun run build:exe
-bun run release -- patch
+bun release
 ```
 
 Release binary build (all targets):
@@ -273,10 +273,18 @@ Release binaries are written to `release-dist/`.
 One-command release cut (version bump + checks + commit + tag + push):
 
 ```bash
-bun run release -- patch
+bun release
 ```
 
-Accepted targets: `patch`, `minor`, `major`, or explicit `vX.Y.Z`.
+`patch` is the default. Accepted targets: `patch`, `minor`, `major`, or explicit `vX.Y.Z`.
+
+Examples:
+
+```bash
+bun release
+bun release minor
+bun release v0.2.0
+```
 
 ## Release automation
 

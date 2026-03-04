@@ -34,7 +34,7 @@ gh prx doctor
 - Verify tracked dist is current: `bun run build:check`
 - Build single-file executable (host): `bun run build:exe`
 - Build all release binaries: `bun run build:release -- vX.Y.Z`
-- Cut and publish release in one command: `bun run release -- patch`
+- Cut and publish release in one command: `bun release`
 
 No lint/format config files are required; defaults are used.
 
