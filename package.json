@@ -1,6 +1,6 @@
 {
   "name": "gh-prx",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "GitHub CLI extension for agentic PR and CI workflows",
   "keywords": [
     "agent",
@@ -37,7 +37,7 @@
     "build:check": "bun run build && git diff --exit-code -- dist",
     "build:exe": "bun scripts/build-exe.ts",
     "build:release": "bun scripts/build-release.ts",
-    "release:cut": "bun scripts/release-cut.ts",
+    "release": "bun scripts/release.ts",
     "typecheck": "bunx tsgo --noEmit -p tsconfig.json",
     "lint": "bunx oxlint . --ignore-pattern \"**/dist/**\" --ignore-pattern \"**/release-dist/**\"",
     "format": "bunx oxfmt .",

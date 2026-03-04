@@ -259,7 +259,7 @@ bun test
 bun run build
 bun run build:check
 bun run build:exe
-bun run release:cut -- patch
+bun run release -- patch
 ```
 
 Release binary build (all targets):
@@ -273,7 +273,7 @@ Release binaries are written to `release-dist/`.
 One-command release cut (version bump + checks + commit + tag + push):
 
 ```bash
-bun run release:cut -- patch
+bun run release -- patch
 ```
 
 Accepted targets: `patch`, `minor`, `major`, or explicit `vX.Y.Z`.

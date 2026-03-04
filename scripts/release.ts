@@ -7,6 +7,8 @@ interface PackageJson {
 }
 
 function run(command: string[], label: string): string {
+  console.log(`==> ${label}`);
+  console.log(`$ ${command.join(" ")}`);
   const proc = Bun.spawnSync(command, {
     stdout: "pipe",
     stderr: "pipe",
@@ -20,7 +22,11 @@ function run(command: string[], label: string): string {
     throw new Error(`${label} failed: ${output}`);
   }
 
-  return Buffer.from(proc.stdout).toString("utf8").trim();
+  const output = Buffer.from(proc.stdout).toString("utf8").trim();
+  if (output) {
+    console.log(output);
+  }
+  return output;
 }
 
 function readPackageJson(): { path: URL; json: PackageJson } {
@@ -62,7 +68,7 @@ function parseArgs(args: string[]): { target: string | BumpKind; push: boolean }
 
   const target = (rest[0] as string | undefined) ?? "patch";
   if (!["major", "minor", "patch"].includes(target) && !/^v?\d+\.\d+\.\d+$/.test(target)) {
-    throw new Error("Usage: bun run release:cut -- [patch|minor|major|vX.Y.Z|X.Y.Z] [--no-push]");
+    throw new Error("Usage: bun run release -- [patch|minor|major|vX.Y.Z|X.Y.Z] [--no-push]");
   }
 
   return {

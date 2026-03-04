@@ -2286,8 +2286,8 @@ function toStoredTarget(parsed) {
 
 // src/cli/index.ts
 function resolveCliVersion() {
-  if ("0.1.5".trim()) {
-    return "0.1.5";
+  if ("0.1.6".trim()) {
+    return "0.1.6";
   }
   const here = dirname2(fileURLToPath(import.meta.url));
   const candidates = [resolve(here, "../package.json"), resolve(here, "../../package.json")];
@@ -2598,4 +2598,4 @@ try {
   process.exit(1);
 }
 
-//# debugId=A3DDB82D376626C864756E2164756E21
+//# debugId=B35E94AF777E97E764756E2164756E21
